@@ -1,4 +1,5 @@
 import { oauthProviderAuthServerMetadata } from '@better-auth/oauth-provider';
+import { APIError } from 'better-auth/api';
 import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
 import { sql } from 'drizzle-orm';
 import express, {
@@ -80,6 +81,14 @@ export function createApp({ db, auth }: AppOptions): Express {
   // Login: GitHub is the only option, so go there straight away. Better Auth carries the signed
   // authorization request through the GitHub round trip and resumes it afterwards.
   app.get(LOGIN_PATH, async (req, res) => {
+    // Only reachable as a step of an authorization request, which arrives signed.
+    if (!new URLSearchParams(rawQuery(req)).has('sig')) {
+      res
+        .status(400)
+        .type('html')
+        .send(errorPage('Please start the sign-in from the application.'));
+      return;
+    }
     // `oauth_query` is read by the OAuth provider plugin's hook, not by the sign-in endpoint
     // itself, so it is not part of the endpoint's body type.
     const body = { provider: 'github', callbackURL: '/', oauth_query: rawQuery(req) };
@@ -144,10 +153,18 @@ export function createApp({ db, auth }: AppOptions): Express {
   });
 
   const errorHandler: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
+    if (res.headersSent) return;
+    // Rejected requests (e.g. /login opened directly or with a tampered or expired OAuth
+    // request): the client's fault, so a 400 page instead of an internal error.
+    if (error instanceof APIError && error.statusCode < 500) {
+      log.warn('request rejected', { status: error.statusCode });
+      res.status(400).type('html').send(errorPage('The request is invalid or has expired.'));
+      return;
+    }
     log.error('unhandled request error', {
       error: error instanceof Error ? error.name : 'unknown',
     });
-    if (!res.headersSent) res.status(500).type('html').send(errorPage('Internal error.'));
+    res.status(500).type('html').send(errorPage('Internal error.'));
   };
   app.use(errorHandler);
 

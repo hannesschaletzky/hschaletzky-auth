@@ -372,4 +372,10 @@ describe('authorization server', () => {
     for (let i = 0; i < 6; i++) statuses.push((await register()).status);
     expect(statuses).toContain(429);
   });
+
+  it('answers a login without a valid signed OAuth request with 400, not 500', async () => {
+    const visit = browser();
+    expect((await visit('/login')).status).toBe(400);
+    expect((await visit('/login?client_id=x&sig=forged')).status).toBe(400);
+  });
 });
