@@ -1,12 +1,15 @@
+# Monthly, one grouped PR per ecosystem for minor and patch updates. Those merge themselves once
+# CI is green (workflows/dependabot-automerge.yml); major updates come as separate PRs and are
+# reviewed by hand. Security updates arrive immediately, independent of this schedule.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
-      dev-dependencies:
-        dependency-type: development
+      npm:
+        update-types: [minor, patch]
     ignore:
       # Types must match the minimum supported Node version ("engines"), not the newest one.
       - dependency-name: '@types/node'
@@ -17,12 +20,15 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions:
+        update-types: [minor, patch]
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
   - package-ecosystem: docker-compose
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
