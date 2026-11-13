@@ -1,0 +1,8 @@
+# Only what the build needs; never secrets or local data.
+*
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.build.json
+!src/
+!drizzle/

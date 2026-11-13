@@ -1,0 +1,19 @@
+# Secrets and real data — never commit
+.env*
+!.env.example
+*.private.*
+*.dump
+*.sql.gz
+backups/
+
+# Private briefing for Claude Code (contains acquisition strategy and infra notes)
+CLAUDE.md
+
+# Build and dependencies
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store

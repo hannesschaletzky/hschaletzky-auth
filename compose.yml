@@ -1,0 +1,26 @@
+# Local development only. Production runs via hschaletzky-infra, where Postgres has no published port.
+name: hschaletzky-auth
+
+services:
+  postgres:
+    # Pinned on purpose; the integration tests read this tag so both always match.
+    image: postgres:18.6-alpine3.24
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_DB: auth
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      # Bound to localhost only, never to all interfaces.
+      - '127.0.0.1:5433:5432'
+    volumes:
+      # Postgres 18+ images keep data in a versioned subdirectory below this path.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U auth -d auth']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  postgres_data:
